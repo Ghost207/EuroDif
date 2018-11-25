@@ -23,6 +23,13 @@ struct quantity
 	int incoming;
 };
 
+struct country_pair
+{
+	int code1;
+	int code2;
+	int value;
+};
+
 class city
 {
 private:
@@ -144,7 +151,7 @@ void init_cities(country* countries, int number_of_countries, city (&cities)[11]
 	return;
 }
 
-void init_countries(FILE* input, country* countries, int number_of_countries)
+int init_countries(FILE* input, country* countries, int number_of_countries)
 {
 	char buffer[254];
 	int xl = 0;
@@ -152,20 +159,38 @@ void init_countries(FILE* input, country* countries, int number_of_countries)
 	int yl = 0;
 	int yh = 0;
 	for(int i = 0; i < number_of_countries; i++)
+	{
+		fscanf(input, "%s%d%d%d%d", buffer, &xl, &yl, &xh, &yh);
+		if(xl < 1 || xl > xh || yl < 1 || yl > yh || yh > 10 || xh > 10)
 		{
-			fscanf(input, "%s%d%d%d%d", buffer, &xl, &yl, &xh, &yh);
-			countries[i].code = i;
-			countries[i].xl = xl;
-			countries[i].yl = yl;
-			countries[i].xh = xh;
-			countries[i].yh = yh;
-			countries[i].is_finished = false;
-			strcpy(countries[i].name, buffer);
+			return -1;
 		}
+		countries[i].code = i;
+		countries[i].xl = xl;
+		countries[i].yl = yl;
+		countries[i].xh = xh;
+		countries[i].yh = yh;
+		countries[i].is_finished = false;
+		strcpy(countries[i].name, buffer);
+	}
+	return 0;
 }
 
 void sort_countries(country* countries, int lenth)
 {
+	country tmp;
+	for(int j = 0; j < lenth; j++)
+	{
+		for(int k = 0; k < lenth; k++)
+		{
+			if(strcmp(countries[j].name, countries[k].name)<0)
+			{
+				tmp = countries[j];
+				countries[j] = countries[k];
+				countries[k] = tmp;
+			}
+		}
+	}
 	for(int i = 1; i < lenth; i++)
 	{
 		for(int j = i; j > 0 && countries[j - 1].time_of_finishing > countries[j].time_of_finishing; j--)
@@ -261,6 +286,129 @@ void print_countries(country* countries, int number_of_countries, int case_numbe
 	return;
 }
 
+void do_pairs(vector<country_pair> &country_pairs, int index)
+{
+	int lenth = country_pairs.size();
+	for(int i = 0; i < lenth; i++)
+	{
+		if(index != i)
+		{
+			if(country_pairs[i].value != 0)
+			{
+				if((country_pairs[index].code1 == country_pairs[i].code1 || 
+					country_pairs[index].code2 == country_pairs[i].code2 ||
+					country_pairs[index].code2 == country_pairs[i].code1 ||
+					country_pairs[index].code1 == country_pairs[i].code2) && country_pairs[index].value == 0)
+				{
+					country_pairs[i].value = 0;
+					do_pairs(country_pairs, 0);
+				}
+			}
+		}
+	}
+	return;
+}
+
+bool all_countries_in_pairs(vector<country_pair> country_pairs, country* countries, int number_of_countries)
+{
+	bool in_pair = true;
+	int lenth = country_pairs.size();
+	for(int i = 0; i < number_of_countries; i++)
+	{
+		in_pair = false;
+		for(int j = 0; j < lenth; j++)
+		{
+			if(country_pairs[j].code1 == countries[i].code || country_pairs[j].code2 == countries[i].code)
+			{
+				in_pair = true;
+				break;
+			}
+		}
+		if(!in_pair)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool countries_not_intersect(country* countries, int number_of_countries)
+{
+	if(1 == number_of_countries)
+	{
+		return true;
+	}
+	for(int i = 0; i < number_of_countries; i++)
+	{
+		for(int j = 0; j < number_of_countries; j++)
+		{
+			if(i != j)
+			{
+				if(countries[i].xl >= countries[j].xl && countries[i].yl >= countries[j].yl && 
+					(countries[i].xl <= countries[j].xh && countries[i].yl <= countries[j].yh))
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+void create_pairs(vector<country_pair> &country_pairs, country* countries, int number_of_countries)
+{
+	country_pair tmp;
+	for(int i = 0; i < number_of_countries - 1; i++)
+	{
+		for(int j = i + 1; j < number_of_countries; j++)
+		{
+
+				if((countries[i].xl == (countries[j].xh + 1) && countries[i].yl <= countries[j].yh) ||
+				(countries[i].xl <= countries[j].xh && countries[i].yl == (countries[j].yh + 1)) ||
+				(countries[j].xl == (countries[i].xh + 1) && countries[j].yl <= countries[i].yh) ||
+				(countries[j].xl <= countries[i].xh && countries[j].yl == (countries[i].yh + 1)))
+				{
+					tmp.code1 = countries[i].code;
+					tmp.code2 = countries[j].code;
+					tmp.value = -1;
+					country_pairs.push_back(tmp);
+				}
+			
+		}
+	}
+}
+
+bool check_countries(country* countries, int number_of_countries)
+{
+	if(!countries_not_intersect(countries, number_of_countries))
+	{
+		return false;
+	}
+	vector<country_pair> country_pairs;
+	create_pairs(country_pairs, countries, number_of_countries);
+	if(country_pairs.empty())
+	{
+		return false;
+	}
+	if(!all_countries_in_pairs(country_pairs, countries, number_of_countries))
+	{
+		return false;
+	}
+	country_pairs[0].value = 0;
+	do_pairs(country_pairs, 0);
+	int lenth = country_pairs.size();
+	for(int i = 0; i < lenth; i++)
+	{
+		if(country_pairs[i].value != 0)
+		{
+			country_pairs.clear();
+			return false;
+		}
+	}
+	country_pairs.clear();
+	return true;
+}
+
 int main()
 {
 	int number_of_countries = 0;
@@ -275,12 +423,26 @@ int main()
 	{
 		case_counter++;
 		fscanf(input,  "%d", &number_of_countries);
+		if(20 < number_of_countries)
+		{
+			printf("Too many countries");
+			break;
+		}
 		if(0 == number_of_countries)
 		{
 			break;
 		}
 		country *countries = new country[number_of_countries]; 
-		init_countries(input, countries, number_of_countries);
+		if(-1 == init_countries(input, countries, number_of_countries))
+		{
+			printf("This coordinates is not allowed");
+			break;
+		}
+		if(!check_countries(countries, number_of_countries))
+		{
+			printf("Wrong coordinates");
+			break;
+		}
 		do_case(countries, number_of_countries);
 		sort_countries(countries, number_of_countries);
 		print_countries(countries,number_of_countries, case_counter);
