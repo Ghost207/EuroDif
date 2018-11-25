@@ -334,10 +334,6 @@ bool all_countries_in_pairs(vector<country_pair> country_pairs, country* countri
 
 bool countries_not_intersect(country* countries, int number_of_countries)
 {
-	if(1 == number_of_countries)
-	{
-		return true;
-	}
 	for(int i = 0; i < number_of_countries; i++)
 	{
 		for(int j = 0; j < number_of_countries; j++)
@@ -380,6 +376,10 @@ void create_pairs(vector<country_pair> &country_pairs, country* countries, int n
 
 bool check_countries(country* countries, int number_of_countries)
 {
+	if(1 == number_of_countries)
+	{
+		return true;
+	}
 	if(!countries_not_intersect(countries, number_of_countries))
 	{
 		return false;
