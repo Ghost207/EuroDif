@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <vector>
-#include <conio.h>
+#include <regex>
+#include <cctype>
 
 using namespace std;
 
@@ -151,7 +152,7 @@ void init_cities(country* countries, int number_of_countries, city (&cities)[11]
 	return;
 }
 
-int init_countries(FILE* input, country* countries, int number_of_countries)
+bool init_countries(FILE* input, country* countries, int number_of_countries)
 {
 	char buffer[254];
 	int xl = 0;
@@ -163,7 +164,7 @@ int init_countries(FILE* input, country* countries, int number_of_countries)
 		fscanf(input, "%s%d%d%d%d", buffer, &xl, &yl, &xh, &yh);
 		if(xl < 1 || xl > xh || yl < 1 || yl > yh || yh > 10 || xh > 10)
 		{
-			return -1;
+			return false;
 		}
 		countries[i].code = i;
 		countries[i].xl = xl;
@@ -173,7 +174,7 @@ int init_countries(FILE* input, country* countries, int number_of_countries)
 		countries[i].is_finished = false;
 		strcpy(countries[i].name, buffer);
 	}
-	return 0;
+	return true;
 }
 
 void sort_countries(country* countries, int lenth)
@@ -334,17 +335,16 @@ bool all_countries_in_pairs(vector<country_pair> country_pairs, country* countri
 
 bool countries_not_intersect(country* countries, int number_of_countries)
 {
-	for(int i = 0; i < number_of_countries; i++)
+	for(int i = 0; i < number_of_countries - 1; i++)
 	{
-		for(int j = 0; j < number_of_countries; j++)
+		for(int j = i + 1; j < number_of_countries; j++)
 		{
-			if(i != j)
+			if((countries[i].xl >= countries[j].xl && countries[i].yl >= countries[j].yl && 
+					countries[i].xl <= countries[j].xh && countries[i].yl <= countries[j].yh) ||
+					countries[j].xl >= countries[i].xl && countries[j].yl >= countries[i].yl && 
+					countries[j].xl <= countries[i].xh && countries[j].yl <= countries[i].yh)
 			{
-				if(countries[i].xl >= countries[j].xl && countries[i].yl >= countries[j].yl && 
-					(countries[i].xl <= countries[j].xh && countries[i].yl <= countries[j].yh))
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}
@@ -359,17 +359,16 @@ void create_pairs(vector<country_pair> &country_pairs, country* countries, int n
 		for(int j = i + 1; j < number_of_countries; j++)
 		{
 
-				if((countries[i].xl == (countries[j].xh + 1) && countries[i].yl <= countries[j].yh) ||
-				(countries[i].xl <= countries[j].xh && countries[i].yl == (countries[j].yh + 1)) ||
-				(countries[j].xl == (countries[i].xh + 1) && countries[j].yl <= countries[i].yh) ||
-				(countries[j].xl <= countries[i].xh && countries[j].yl == (countries[i].yh + 1)))
-				{
-					tmp.code1 = countries[i].code;
-					tmp.code2 = countries[j].code;
-					tmp.value = -1;
-					country_pairs.push_back(tmp);
-				}
-			
+			if((countries[i].xl == (countries[j].xh + 1) && countries[i].yl <= countries[j].yh) ||
+			(countries[i].xl <= countries[j].xh && countries[i].yl == (countries[j].yh + 1)) ||
+			(countries[j].xl == (countries[i].xh + 1) && countries[j].yl <= countries[i].yh) ||
+			(countries[j].xl <= countries[i].xh && countries[j].yl == (countries[i].yh + 1)))
+			{
+				tmp.code1 = countries[i].code;
+				tmp.code2 = countries[j].code;
+				tmp.value = -1;
+				country_pairs.push_back(tmp);
+			}
 		}
 	}
 }
@@ -382,16 +381,19 @@ bool check_countries(country* countries, int number_of_countries)
 	}
 	if(!countries_not_intersect(countries, number_of_countries))
 	{
+		printf("\nIntersection of countries\n");
 		return false;
 	}
 	vector<country_pair> country_pairs;
 	create_pairs(country_pairs, countries, number_of_countries);
 	if(country_pairs.empty())
 	{
+		printf("\nUnreachable countries exist\n");
 		return false;
 	}
 	if(!all_countries_in_pairs(country_pairs, countries, number_of_countries))
 	{
+		printf("\nUnreachable countries exist\n");
 		return false;
 	}
 	country_pairs[0].value = 0;
@@ -401,6 +403,7 @@ bool check_countries(country* countries, int number_of_countries)
 	{
 		if(country_pairs[i].value != 0)
 		{
+			printf("\nUnreachable countries exist\n");
 			country_pairs.clear();
 			return false;
 		}
@@ -409,11 +412,99 @@ bool check_countries(country* countries, int number_of_countries)
 	return true;
 }
 
+bool skip_empty_lines(char* buffer, FILE* input)
+{
+	while(buffer[0] == '\n')
+	{
+		if (NULL == fgets(buffer, 255, input))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool number_of_inputs_correct(char* buffer)
+{
+	int n = strlen(buffer);
+	for(int i = 0; i < n; i++)
+	{
+		if(!isdigit(buffer[i]))
+		{
+			if(buffer[i] != '\n' && buffer[i] != '\t' && buffer[i] != ' ')
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool counties_description_is_correct(FILE* input, char* buffer, int number_of_inputs)
+{
+	regex base_regex("^[ \f\n\r\t\v]{0,}[A-Z][a-z]{0,24}[ \f\n\r\t\v]{1,}[0-9]{1,2}[ \f\n\r\t\v]{1,}"
+		"[0-9]{1,2}[ \f\n\r\t\v]{1,}[0-9]{1,2}[ \f\n\r\t\v]{1,}[0-9]{1,2}[ \f\n\r\t\v]{0,}$");
+	smatch base_match;
+	string string_buffer;
+	for(int i = 0; i < number_of_inputs; i++)
+	{
+		if (NULL == fgets(buffer, 255, input) || !skip_empty_lines(buffer, input))
+		{
+			printf("Wrong input pattern");
+			fclose(input);
+			return false;
+		}
+		string_buffer.clear();
+		string_buffer.append(buffer);
+		if (!regex_match(string_buffer, base_match, base_regex))
+		{
+			printf("Wrong input pattern");
+			fclose(input);
+			return false;
+		}
+	}
+	return true;
+}
+
+bool input_is_correct(string name)
+{
+	int number_of_inputs = -1;
+	char buffer[100000];
+	FILE* input = fopen(name.c_str(), "r");
+	if (input == NULL)
+	{
+		return -1;
+	}
+	while(0 != number_of_inputs)
+	{
+		if(NULL == fgets(buffer, 255, input) || !skip_empty_lines(buffer, input) || !number_of_inputs_correct(buffer))
+		{
+			printf("Wrong input pattern");
+			fclose(input);
+			return false;
+		}
+		number_of_inputs = atoi(buffer);
+		if(!counties_description_is_correct(input, buffer, number_of_inputs))
+		{
+			printf("Wrong input pattern");
+			fclose(input);
+			return false;
+		}
+	}
+	fclose(input);	
+	return true;
+}
+
 int main()
 {
 	int number_of_countries = 0;
 	int case_counter = 0;
-
+	if(false == input_is_correct("input.txt"))
+	{
+		printf("\n");
+		system("pause");
+		return -1;
+	}
 	FILE* input = fopen("input.txt", "r");
 	if (input == NULL)
 	{
@@ -423,7 +514,7 @@ int main()
 	{
 		case_counter++;
 		fscanf(input,  "%d", &number_of_countries);
-		if(20 < number_of_countries)
+		if(number_of_countries > 20 || number_of_countries < 0)
 		{
 			printf("Too many countries");
 			break;
@@ -433,7 +524,7 @@ int main()
 			break;
 		}
 		country *countries = new country[number_of_countries]; 
-		if(-1 == init_countries(input, countries, number_of_countries))
+		if(!init_countries(input, countries, number_of_countries))
 		{
 			printf("This coordinates is not allowed");
 			break;
@@ -448,7 +539,8 @@ int main()
 		print_countries(countries,number_of_countries, case_counter);
 		delete[] countries;
 	}
-	fclose(input);	
-	getch();
+	fclose(input);
+	printf("\n");
+	system("pause");
 	return 0;
 }
