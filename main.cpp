@@ -514,30 +514,36 @@ int main()
 	{
 		case_counter++;
 		fscanf(input,  "%d", &number_of_countries);
-		if(number_of_countries > 20 || number_of_countries < 0)
-		{
-			printf("Too many countries");
-			break;
-		}
 		if(0 == number_of_countries)
 		{
 			break;
 		}
-		country *countries = new country[number_of_countries]; 
-		if(!init_countries(input, countries, number_of_countries))
+		if(number_of_countries > 20 || number_of_countries < 0)
 		{
-			printf("This coordinates is not allowed");
-			break;
+			printf("Wrong number of countries");
 		}
-		if(!check_countries(countries, number_of_countries))
+		else
 		{
-			printf("Wrong coordinates");
-			break;
-		}
-		do_case(countries, number_of_countries);
-		sort_countries(countries, number_of_countries);
-		print_countries(countries,number_of_countries, case_counter);
-		delete[] countries;
+			country *countries = new country[number_of_countries];
+			if(!init_countries(input, countries, number_of_countries))
+			{
+				printf("This coordinates is not allowed");
+			}
+			else
+			{
+				if(!check_countries(countries, number_of_countries))
+				{
+					printf("Wrong coordinates");
+				}
+				else
+				{
+					do_case(countries, number_of_countries);
+					sort_countries(countries, number_of_countries);
+					print_countries(countries,number_of_countries, case_counter);
+				}
+			}
+			delete[] countries;
+		}		
 	}
 	fclose(input);
 	printf("\n");
