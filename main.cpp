@@ -454,7 +454,6 @@ bool counties_description_is_correct(FILE* input, char* buffer, int number_of_in
 	{
 		if (NULL == fgets(buffer, 255, input) || !skip_empty_lines(buffer, input))
 		{
-			printf("Wrong input pattern");
 			fclose(input);
 			return false;
 		}
@@ -462,7 +461,6 @@ bool counties_description_is_correct(FILE* input, char* buffer, int number_of_in
 		string_buffer.append(buffer);
 		if (!regex_match(string_buffer, base_match, base_regex))
 		{
-			printf("Wrong input pattern");
 			fclose(input);
 			return false;
 		}
