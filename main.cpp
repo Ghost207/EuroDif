@@ -497,6 +497,24 @@ bool input_is_correct(string name)
 	return true;
 }
 
+bool countries_are_unique(country* countries, int number_of_countries)
+{
+	string tmp_name1, tmp_name2;
+	for(int i = 0; i < number_of_countries; i++)
+	{
+		for(int j = i + 1; j < number_of_countries - 1; j++)
+		{
+			tmp_name1 = countries[i].name;
+			tmp_name2 = countries[j].name;
+			if(tmp_name1.compare(tmp_name2) == 0)
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 int main()
 {
 	int number_of_countries = 0;
@@ -522,26 +540,33 @@ int main()
 		}
 		if(number_of_countries > 20 || number_of_countries < 0)
 		{
-			printf("Wrong number of countries");
+			printf("\nWrong number of countries");
 		}
 		else
 		{
 			country *countries = new country[number_of_countries];
 			if(!init_countries(input, countries, number_of_countries))
 			{
-				printf("This coordinates is not allowed");
+				printf("\nThis coordinates is not allowed");
 			}
 			else
 			{
-				if(!check_countries(countries, number_of_countries))
+				if(!countries_are_unique(countries, number_of_countries))
 				{
-					printf("Wrong coordinates");
+						printf("\nNames of countries must be unique");
 				}
 				else
 				{
-					do_case(countries, number_of_countries);
-					sort_countries(countries, number_of_countries);
-					print_countries(countries,number_of_countries, case_counter);
+					if(!check_countries(countries, number_of_countries))
+					{
+						printf("\nWrong coordinates");
+					}
+					else
+					{
+						do_case(countries, number_of_countries);
+						sort_countries(countries, number_of_countries);
+						print_countries(countries,number_of_countries, case_counter);
+					}
 				}
 			}
 			delete[] countries;
