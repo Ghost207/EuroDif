@@ -351,6 +351,13 @@ bool countries_not_intersect(country* countries, int number_of_countries)
 	return true;
 }
 
+bool check_right_and_above_from(country* countries, int i, int j) // for user, above is bellow, because y inverse in matrix
+{
+	bool on_right = countries[i].xl == (countries[j].xh + 1) && countries[i].yl <= countries[j].yh && countries[j].yl <= countries[i].yh;
+	bool on_above = countries[i].xl <= countries[j].xh && countries[i].yl == (countries[j].yh + 1) && countries[j].xl <= countries[i].xh;
+	return (on_right || on_above);
+}
+
 void create_pairs(vector<country_pair> &country_pairs, country* countries, int number_of_countries)
 {
 	country_pair tmp;
@@ -359,10 +366,7 @@ void create_pairs(vector<country_pair> &country_pairs, country* countries, int n
 		for(int j = i + 1; j < number_of_countries; j++)
 		{
 
-			if((countries[i].xl == (countries[j].xh + 1) && countries[i].yl <= countries[j].yh) ||
-			(countries[i].xl <= countries[j].xh && countries[i].yl == (countries[j].yh + 1)) ||
-			(countries[j].xl == (countries[i].xh + 1) && countries[j].yl <= countries[i].yh) ||
-			(countries[j].xl <= countries[i].xh && countries[j].yl == (countries[i].yh + 1)))
+			if(check_right_and_above_from(countries, i, j) || check_right_and_above_from(countries, j, i))
 			{
 				tmp.code1 = countries[i].code;
 				tmp.code2 = countries[j].code;
