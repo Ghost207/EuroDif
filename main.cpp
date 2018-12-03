@@ -302,7 +302,7 @@ void do_pairs(vector<country_pair> &country_pairs, int index)
 					country_pairs[index].code1 == country_pairs[i].code2) && country_pairs[index].value == 0)
 				{
 					country_pairs[i].value = 0;
-					do_pairs(country_pairs, 0);
+					do_pairs(country_pairs, i);
 				}
 			}
 		}
