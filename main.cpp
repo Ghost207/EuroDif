@@ -8,7 +8,7 @@ using namespace std;
 struct country
 {
 	bool is_finished;
-	char name[255];
+	char name[26];
 	int code;
 	int xl;
 	int yl;
@@ -204,22 +204,19 @@ void sort_countries(country* countries, int lenth)
 	return;
 }
 
-void send_quantities(country* countries, int number_of_countries, city (&cities)[11][11])
+void take_quantities(city (&cities)[11][11], int i, int j)
 {
-	for(int k = 0; k < number_of_countries; k++)
-	{
-		for(int i = countries[k].yl; i <= countries[k].yh; i++)
-		{
-			for(int j = countries[k].xl; j <= countries[k].xh; j++)
-			{
-				cities[i][j].send(cities, i, j);
-			}
-		}
-	}
+	cities[i][j].take();
 	return;
 }
 
-void take_quantities(country* countries, int number_of_countries, city (&cities)[11][11])
+void send_quantities(city (&cities)[11][11], int i, int j)
+{
+	cities[i][j].send(cities, i, j);
+	return;
+}
+
+void actions_with_quantities(country* countries, int number_of_countries, city (&cities)[11][11], void (*func)(city (&)[11][11], int, int))
 {
 	for(int k = 0; k < number_of_countries; k++)
 	{
@@ -227,7 +224,7 @@ void take_quantities(country* countries, int number_of_countries, city (&cities)
 		{
 			for(int j = countries[k].xl; j <= countries[k].xh; j++)
 			{
-				cities[i][j].take();
+				(func)(cities, i, j);
 			}
 		}
 	}
@@ -270,8 +267,8 @@ void do_case(country* countries, int number_of_countries)
 		{
 			break;
 		}
-		send_quantities(countries, number_of_countries, cities);
-		take_quantities(countries, number_of_countries, cities);
+		actions_with_quantities(countries, number_of_countries, cities, send_quantities);
+		actions_with_quantities(countries, number_of_countries, cities, take_quantities);
 		timer_of_days++;
 	}
 	return;
@@ -365,7 +362,6 @@ void create_pairs(vector<country_pair> &country_pairs, country* countries, int n
 	{
 		for(int j = i + 1; j < number_of_countries; j++)
 		{
-
 			if(check_right_and_above_from(countries, i, j) || check_right_and_above_from(countries, j, i))
 			{
 				tmp.code1 = countries[i].code;
@@ -452,7 +448,7 @@ bool counties_description_is_correct(FILE* input, char* buffer, int number_of_in
 	string string_buffer;
 	for(int i = 0; i < number_of_inputs; i++)
 	{
-		if (NULL == fgets(buffer, 255, input) || !skip_empty_lines(buffer, input))
+		if (NULL == fgets(buffer, 999, input) || !skip_empty_lines(buffer, input))
 		{
 			fclose(input);
 			return false;
@@ -471,7 +467,7 @@ bool counties_description_is_correct(FILE* input, char* buffer, int number_of_in
 bool input_is_correct(string name)
 {
 	int number_of_inputs = -1;
-	char buffer[100000];
+	char buffer[1000];
 	FILE* input = fopen(name.c_str(), "r");
 	if (input == NULL)
 	{
